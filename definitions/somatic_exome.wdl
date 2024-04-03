@@ -146,10 +146,10 @@ workflow somaticExome {
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict,
-    bam_1=tumorAlignment.final_bam,
-    bam_1_bai=tumorAlignment.final_bam_bai,
-    bam_2=normalAlignment.final_bam,
-    bam_2_bai=normalAlignment.final_bam_bai,
+    bam_1=tumor_bam,
+    bam_1_bai=tumor_bam_bai,
+    bam_2=normal_bam,
+    bam_2_bai=normal_bam_bai,
     vcf=somalier_vcf
   }
 
@@ -256,12 +256,10 @@ workflow somaticExome {
   output {
     File tumor_cram = tumorIndexCram.indexed_cram
     File tumor_cram_crai = tumorIndexCram.indexed_cram_crai
-    File tumor_mark_duplicates_metrics = tumorAlignment.mark_duplicates_metrics_file
     QCMetrics tumor_qc_metrics = tumorQc.metrics
 
     File normal_cram = normalIndexCram.indexed_cram
     File normal_cram_crai = normalIndexCram.indexed_cram_crai
-    File normal_mark_duplicates_metrics = normalAlignment.mark_duplicates_metrics_file
     QCMetrics normal_qc_metrics = normalQc.metrics
 
     File mutect_unfiltered_vcf = detectVariants.mutect_unfiltered_vcf
