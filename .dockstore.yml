@@ -1,25 +1,25 @@
 version: 1.2
 workflows:
- - name: immuno
-   subclass: WDL
-   publish: True  
-   primaryDescriptorPath: /definitions/immuno.wdl
-   filters:
-    branches:
-      - main
+  - name: immuno
+    subclass: WDL
+    publish: True  
+    primaryDescriptorPath: /definitions/immuno.wdl
+    filters:
+      branches:
+        - main
 
- - name: somatic_exome
-   subclass: WDL
-   publish: True  
-   primaryDescriptorPath: /definitions/somatic_exome.wdl
-   filters:
-    branches:
-      - main
+  - name: somatic_exome
+    subclass: WDL
+    publish: True  
+    primaryDescriptorPath: /definitions/somatic_exome.wdl
+    filters:
+      branches:
+        - main
 
- - name: detect_variants
-   subclass: WDL
-   publish: True  
-   primaryDescriptorPath: /definitions/detect_variants.wdl
-   filters:
-    branches:
-      - main
+  - name: detect_variants
+    subclass: WDL
+    publish: True  
+    primaryDescriptorPath: /definitions/detect_variants.wdl
+    filters:
+      branches:
+        - main
