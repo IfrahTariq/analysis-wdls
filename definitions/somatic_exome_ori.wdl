@@ -28,14 +28,15 @@ workflow somaticExome {
 
     String tumor_name = "tumor"
     String tumor_sample_name
-    File tumor_bam
-    File tumor_bam_bai
+    Array[SequenceData] tumor_sequence
 
     String normal_name = "normal"
     String normal_sample_name
-    File normal_bam
-    File normal_bam_bai
+    Array[SequenceData] normal_sequence
     TrimmingOptions? trimming
+
+    Array[File] bqsr_known_sites
+    Array[File] bqsr_known_sites_tbi
 
     File bait_intervals
     File target_intervals
@@ -101,11 +102,27 @@ workflow somaticExome {
     Int? cnvkit_target_average_size
   }
 
-
+  call s2b.sequenceToBqsr as tumorAlignment {
+    input:
+    reference=reference,
+    reference_fai=reference_fai,
+    reference_dict=reference_dict,
+    reference_alt=reference_alt,
+    reference_amb=reference_amb,
+    reference_ann=reference_ann,
+    reference_bwt=reference_bwt,
+    reference_pac=reference_pac,
+    reference_0123=reference_0123,
+    unaligned=tumor_sequence,
+    trimming=trimming,
+    bqsr_known_sites=bqsr_known_sites,
+    bqsr_known_sites_tbi=bqsr_known_sites_tbi,
+    final_name=tumor_name
+  }
   call qe.qcExome as tumorQc {
     input:
-    bam=tumor_bam,
-    bam_bai=tumor_bam_bai,
+    bam=tumorAlignment.final_bam,
+    bam_bai=tumorAlignment.final_bam_bai,
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict,
@@ -121,11 +138,28 @@ workflow somaticExome {
     minimum_base_quality=qc_minimum_base_quality
   }
 
+  call s2b.sequenceToBqsr as normalAlignment {
+    input:
+    reference=reference,
+    reference_fai=reference_fai,
+    reference_dict=reference_dict,
+    reference_alt=reference_alt,
+    reference_amb=reference_amb,
+    reference_ann=reference_ann,
+    reference_bwt=reference_bwt,
+    reference_pac=reference_pac,
+    reference_0123=reference_0123,
+    unaligned=normal_sequence,
+    trimming=trimming,
+    bqsr_known_sites=bqsr_known_sites,
+    bqsr_known_sites_tbi=bqsr_known_sites_tbi,
+    final_name=normal_name
+  }
 
   call qe.qcExome as normalQc {
     input:
-    bam=normal_bam,
-    bam_bai=normal_bam_bai,
+    bam=normalAlignment.final_bam,
+    bam_bai=normalAlignment.final_bam_bai,
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict,
@@ -161,10 +195,10 @@ workflow somaticExome {
 
   call dv.detectVariants {
     input:
-    tumor_bam=tumor_bam,
-    tumor_bam_bai=tumor_bam_bai,
-    normal_bam=normal_bam,
-    normal_bam_bai=normal_bam_bai,
+    tumor_bam=tumorAlignment.final_bam,
+    tumor_bam_bai=tumorAlignment.final_bam_bai,
+    normal_bam=normalAlignment.final_bam,
+    normal_bam_bai=normalAlignment.final_bam_bai,
     roi_intervals=padTargetIntervals.expanded_interval_list,
     reference=reference,
     reference_fai=reference_fai,
@@ -205,10 +239,10 @@ workflow somaticExome {
 
   call cb.cnvkitBatch as cnvkit {
     input:
-    tumor_bam=tumor_bam,
-    tumor_bam_bai=tumor_bam_bai,
-    normal_bam=normal_bam,
-    normal_bam_bai=normal_bam_bai,
+    tumor_bam=tumorAlignment.final_bam,
+    tumor_bam_bai=tumorAlignment.final_bam_bai,
+    normal_bam=normalAlignment.final_bam,
+    normal_bam_bai=normalAlignment.final_bam_bai,
     reference_fasta=reference,
     bait_intervals=bait_intervals,
     target_average_size=cnvkit_target_average_size
@@ -216,10 +250,10 @@ workflow somaticExome {
 
   call ms.mantaSomatic as manta {
     input:
-    tumor_bam=tumor_bam,
-    tumor_bam_bai=tumor_bam_bai,
-    normal_bam=normal_bam,
-    normal_bam_bai=normal_bam_bai,
+    tumor_bam=tumorAlignment.final_bam,
+    tumor_bam_bai=tumorAlignment.final_bam_bai,
+    normal_bam=normalAlignment.final_bam,
+    normal_bam_bai=normalAlignment.final_bam_bai,
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict,
@@ -231,7 +265,7 @@ workflow somaticExome {
 
   call btc.bamToCram as tumorBamToCram {
     input:
-    bam=tumor_bam,
+    bam=tumorAlignment.final_bam,
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict
@@ -243,7 +277,7 @@ workflow somaticExome {
 
   call btc.bamToCram as normalBamToCram {
     input:
-    bam=normal_bam,
+    bam=normalAlignment.final_bam,
     reference=reference,
     reference_fai=reference_fai,
     reference_dict=reference_dict
